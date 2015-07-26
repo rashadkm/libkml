@@ -10,3 +10,6 @@ ExternalProject_Add(ZLIB
   -DBUILD_SHARED_LIBS:BOOL=${BUILD_SHARED_LIBS})
 
 include_project_vars(ZLIB)
+if(UNIX)
+  set(ZLIB_LIBRARY "${INSTALL_DIR}/lib/libz.so")
+endif()
