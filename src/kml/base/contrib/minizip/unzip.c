@@ -412,164 +412,6 @@ local uLong unzlocal_SearchCentralDir(pzlib_filefunc_def,filestream)
     return uPosFound;
 }
 
-/*
-  Open a Zip file. path contain the full pathname (by example,
-     on a Windows NT computer "c:\\test\\zlib114.zip" or on an Unix computer
-     "zlib/zlib114.zip".
-     If the zipfile cannot be opened (file doesn't exist or in not valid), the
-       return value is NULL.
-     Else, the return value is a unzFile Handle, usable with other function
-       of this unzip package.
-*/
-extern unzFile ZEXPORT libkml_unzOpen2 (path, pzlib_filefunc_def)
-    const char *path;
-    zlib_filefunc_def* pzlib_filefunc_def;
-{
-    unz_s us;
-    init_unz_s(&us);
-    
-    unz_s *s;
-    
-    uLong central_pos,uL;
-
-    uLong number_disk;          /* number of the current dist, used for
-                                   spaning ZIP, unsupported, always 0*/
-    uLong number_disk_with_CD;  /* number the the disk with central dir, used
-                                   for spaning ZIP, unsupported, always 0*/
-    uLong number_entry_CD;      /* total number of entries in
-                                   the central dir
-                                   (same than number_entry on nospan) */
-
-    int err=UNZ_OK;
-
-    if (libkml_unz_copyright[0]!=' ')
-        return NULL;
-
-    if (pzlib_filefunc_def==NULL)
-        fill_fopen_filefunc(&us.z_filefunc);
-    else
-        us.z_filefunc = *pzlib_filefunc_def;
-
-    us.filestream= (*(us.z_filefunc.zopen_file))(us.z_filefunc.opaque,
-                                                 path,
-                                                 ZLIB_FILEFUNC_MODE_READ |
-                                                 ZLIB_FILEFUNC_MODE_EXISTING);
-    if (us.filestream==NULL)
-        return NULL;
-
-    central_pos = unzlocal_SearchCentralDir(&us.z_filefunc,us.filestream);
-    if (central_pos==0)
-        err=UNZ_ERRNO;
-
-    if (ZSEEK(us.z_filefunc, us.filestream,
-                                      central_pos,ZLIB_FILEFUNC_SEEK_SET)!=0)
-        err=UNZ_ERRNO;
-
-    /* the signature, already checked */
-    if (unzlocal_getLong(&us.z_filefunc, us.filestream,&uL)!=UNZ_OK)
-        err=UNZ_ERRNO;
-
-    /* number of this disk */
-    if (unzlocal_getShort(&us.z_filefunc, us.filestream,&number_disk)!=UNZ_OK)
-        err=UNZ_ERRNO;
-
-    /* number of the disk with the start of the central directory */
-    if (unzlocal_getShort(&us.z_filefunc, us.filestream,&number_disk_with_CD)!=UNZ_OK)
-        err=UNZ_ERRNO;
-
-    /* total number of entries in the central dir on this disk */
-    if (unzlocal_getShort(&us.z_filefunc, us.filestream,&us.gi.number_entry)!=UNZ_OK)
-        err=UNZ_ERRNO;
-
-    /* total number of entries in the central dir */
-    if (unzlocal_getShort(&us.z_filefunc, us.filestream,&number_entry_CD)!=UNZ_OK)
-        err=UNZ_ERRNO;
-
-    if ((number_entry_CD!=us.gi.number_entry) ||
-        (number_disk_with_CD!=0) ||
-        (number_disk!=0))
-        err=UNZ_BADZIPFILE;
-
-    /* size of the central directory */
-    if (unzlocal_getLong(&us.z_filefunc, us.filestream,&us.size_central_dir)!=UNZ_OK)
-        err=UNZ_ERRNO;
-
-    /* offset of start of central directory with respect to the
-          starting disk number */
-    if (unzlocal_getLong(&us.z_filefunc, us.filestream,&us.offset_central_dir)!=UNZ_OK)
-        err=UNZ_ERRNO;
-
-    /* zipfile comment length */
-    if (unzlocal_getShort(&us.z_filefunc, us.filestream,&us.gi.size_comment)!=UNZ_OK)
-        err=UNZ_ERRNO;
-
-    if ((central_pos<us.offset_central_dir+us.size_central_dir) &&
-        (err==UNZ_OK))
-        err=UNZ_BADZIPFILE;
-
-    if (err!=UNZ_OK)
-    {
-        ZCLOSE(us.z_filefunc, us.filestream);
-        return NULL;
-    }
-
-    us.byte_before_the_zipfile = central_pos -
-                            (us.offset_central_dir+us.size_central_dir);
-    us.central_pos = central_pos;
-    us.pfile_in_zip_read = NULL;
-    us.encrypted = 0;
-
-    s=(unz_s*)ALLOC(sizeof(unz_s));
-    *s=us;
-    libkml_unzGoToFirstFile((unzFile)s);
-    return (unzFile)s;
-}
-
-
-extern unzFile ZEXPORT libkml_unzOpen (path)
-    const char *path;
-{
-    return libkml_unzOpen2(path, NULL);
-}
-
-/*
-  Close a ZipFile opened with unzipOpen.
-  If there is files inside the .Zip opened with unzipOpenCurrentFile (see later),
-    these files MUST be closed with unzipCloseCurrentFile before call unzipClose.
-  return UNZ_OK if there is no problem. */
-extern int ZEXPORT libkml_unzClose (file)
-    unzFile file;
-{
-    unz_s* s;
-    if (file==NULL)
-        return UNZ_PARAMERROR;
-    s=(unz_s*)file;
-
-    if (s->pfile_in_zip_read!=NULL)
-        libkml_unzCloseCurrentFile(file);
-
-    ZCLOSE(s->z_filefunc, s->filestream);
-    TRYFREE(s);
-    return UNZ_OK;
-}
-
-
-/*
-  Write info about the ZipFile in the *pglobal_info structure.
-  No preparation of the structure is needed
-  return UNZ_OK if there is no problem. */
-extern int ZEXPORT libkml_unzGetGlobalInfo (file,pglobal_info)
-    unzFile file;
-    unz_global_info *pglobal_info;
-{
-    unz_s* s;
-    if (file==NULL)
-        return UNZ_PARAMERROR;
-    s=(unz_s*)file;
-    *pglobal_info=s->gi;
-    return UNZ_OK;
-}
-
 
 /*
    Translate date/time from Dos format to tm_unz (readable more easilty)
@@ -588,6 +430,7 @@ local void unzlocal_DosDateToTmuDate (ulDosDate, ptm)
     ptm->tm_min =  (uInt) ((ulDosDate&0x7E0)/0x20) ;
     ptm->tm_sec =  (uInt) (2*(ulDosDate&0x1f)) ;
 }
+
 
 /*
   Get Info about the current file in the zipfile, with internal only info
@@ -790,6 +633,7 @@ extern int ZEXPORT libkml_unzGetCurrentFileInfo (file,
                                                 szComment,commentBufferSize);
 }
 
+
 /*
   Set the current file of the zipfile to the first file.
   return UNZ_OK if there is no problem
@@ -810,6 +654,208 @@ extern int ZEXPORT libkml_unzGoToFirstFile (file)
     s->current_file_ok = (err == UNZ_OK);
     return err;
 }
+
+/*
+  Close the file in zip opened with unzipOpenCurrentFile
+  Return UNZ_CRCERROR if all the file was read but the CRC is not good
+*/
+extern int ZEXPORT libkml_unzCloseCurrentFile (file)
+    unzFile file;
+{
+    int err=UNZ_OK;
+
+    unz_s* s;
+    file_in_zip_read_info_s* pfile_in_zip_read_info;
+    if (file==NULL)
+        return UNZ_PARAMERROR;
+    s=(unz_s*)file;
+    pfile_in_zip_read_info=s->pfile_in_zip_read;
+
+    if (pfile_in_zip_read_info==NULL)
+        return UNZ_PARAMERROR;
+
+
+    if ((pfile_in_zip_read_info->rest_read_uncompressed == 0) &&
+        (!pfile_in_zip_read_info->raw))
+    {
+        if (pfile_in_zip_read_info->crc32 != pfile_in_zip_read_info->crc32_wait)
+            err=UNZ_CRCERROR;
+    }
+
+
+    TRYFREE(pfile_in_zip_read_info->read_buffer);
+    pfile_in_zip_read_info->read_buffer = NULL;
+    if (pfile_in_zip_read_info->stream_initialised)
+        inflateEnd(&pfile_in_zip_read_info->stream);
+
+    pfile_in_zip_read_info->stream_initialised = 0;
+    TRYFREE(pfile_in_zip_read_info);
+
+    s->pfile_in_zip_read=NULL;
+
+    return err;
+}
+
+/*
+  Open a Zip file. path contain the full pathname (by example,
+     on a Windows NT computer "c:\\test\\zlib114.zip" or on an Unix computer
+     "zlib/zlib114.zip".
+     If the zipfile cannot be opened (file doesn't exist or in not valid), the
+       return value is NULL.
+     Else, the return value is a unzFile Handle, usable with other function
+       of this unzip package.
+*/
+extern unzFile ZEXPORT libkml_unzOpen2 (path, pzlib_filefunc_def)
+    const char *path;
+    zlib_filefunc_def* pzlib_filefunc_def;
+{
+    unz_s us;
+    
+    unz_s *s;
+    
+    uLong central_pos,uL;
+
+    uLong number_disk;          /* number of the current dist, used for
+                                   spaning ZIP, unsupported, always 0*/
+    uLong number_disk_with_CD;  /* number the the disk with central dir, used
+                                   for spaning ZIP, unsupported, always 0*/
+    uLong number_entry_CD;      /* total number of entries in
+                                   the central dir
+                                   (same than number_entry on nospan) */
+
+    int err=UNZ_OK;
+
+	init_unz_s(&us);
+
+    if (libkml_unz_copyright[0]!=' ')
+        return NULL;
+
+    if (pzlib_filefunc_def==NULL)
+        fill_fopen_filefunc(&us.z_filefunc);
+    else
+        us.z_filefunc = *pzlib_filefunc_def;
+
+    us.filestream= (*(us.z_filefunc.zopen_file))(us.z_filefunc.opaque,
+                                                 path,
+                                                 ZLIB_FILEFUNC_MODE_READ |
+                                                 ZLIB_FILEFUNC_MODE_EXISTING);
+    if (us.filestream==NULL)
+        return NULL;
+
+    central_pos = unzlocal_SearchCentralDir(&us.z_filefunc,us.filestream);
+    if (central_pos==0)
+        err=UNZ_ERRNO;
+
+    if (ZSEEK(us.z_filefunc, us.filestream,
+                                      central_pos,ZLIB_FILEFUNC_SEEK_SET)!=0)
+        err=UNZ_ERRNO;
+
+    /* the signature, already checked */
+    if (unzlocal_getLong(&us.z_filefunc, us.filestream,&uL)!=UNZ_OK)
+        err=UNZ_ERRNO;
+
+    /* number of this disk */
+    if (unzlocal_getShort(&us.z_filefunc, us.filestream,&number_disk)!=UNZ_OK)
+        err=UNZ_ERRNO;
+
+    /* number of the disk with the start of the central directory */
+    if (unzlocal_getShort(&us.z_filefunc, us.filestream,&number_disk_with_CD)!=UNZ_OK)
+        err=UNZ_ERRNO;
+
+    /* total number of entries in the central dir on this disk */
+    if (unzlocal_getShort(&us.z_filefunc, us.filestream,&us.gi.number_entry)!=UNZ_OK)
+        err=UNZ_ERRNO;
+
+    /* total number of entries in the central dir */
+    if (unzlocal_getShort(&us.z_filefunc, us.filestream,&number_entry_CD)!=UNZ_OK)
+        err=UNZ_ERRNO;
+
+    if ((number_entry_CD!=us.gi.number_entry) ||
+        (number_disk_with_CD!=0) ||
+        (number_disk!=0))
+        err=UNZ_BADZIPFILE;
+
+    /* size of the central directory */
+    if (unzlocal_getLong(&us.z_filefunc, us.filestream,&us.size_central_dir)!=UNZ_OK)
+        err=UNZ_ERRNO;
+
+    /* offset of start of central directory with respect to the
+          starting disk number */
+    if (unzlocal_getLong(&us.z_filefunc, us.filestream,&us.offset_central_dir)!=UNZ_OK)
+        err=UNZ_ERRNO;
+
+    /* zipfile comment length */
+    if (unzlocal_getShort(&us.z_filefunc, us.filestream,&us.gi.size_comment)!=UNZ_OK)
+        err=UNZ_ERRNO;
+
+    if ((central_pos<us.offset_central_dir+us.size_central_dir) &&
+        (err==UNZ_OK))
+        err=UNZ_BADZIPFILE;
+
+    if (err!=UNZ_OK)
+    {
+        ZCLOSE(us.z_filefunc, us.filestream);
+        return NULL;
+    }
+
+    us.byte_before_the_zipfile = central_pos -
+                            (us.offset_central_dir+us.size_central_dir);
+    us.central_pos = central_pos;
+    us.pfile_in_zip_read = NULL;
+    us.encrypted = 0;
+
+    s=(unz_s*)ALLOC(sizeof(unz_s));
+    *s=us;
+    libkml_unzGoToFirstFile((unzFile)s);
+    return (unzFile)s;
+}
+
+
+extern unzFile ZEXPORT libkml_unzOpen (path)
+    const char *path;
+{
+    return libkml_unzOpen2(path, NULL);
+}
+
+/*
+  Close a ZipFile opened with unzipOpen.
+  If there is files inside the .Zip opened with unzipOpenCurrentFile (see later),
+    these files MUST be closed with unzipCloseCurrentFile before call unzipClose.
+  return UNZ_OK if there is no problem. */
+extern int ZEXPORT libkml_unzClose (file)
+    unzFile file;
+{
+    unz_s* s;
+    if (file==NULL)
+        return UNZ_PARAMERROR;
+    s=(unz_s*)file;
+
+    if (s->pfile_in_zip_read!=NULL)
+        libkml_unzCloseCurrentFile(file);
+
+    ZCLOSE(s->z_filefunc, s->filestream);
+    TRYFREE(s);
+    return UNZ_OK;
+}
+
+
+/*
+  Write info about the ZipFile in the *pglobal_info structure.
+  No preparation of the structure is needed
+  return UNZ_OK if there is no problem. */
+extern int ZEXPORT libkml_unzGetGlobalInfo (file,pglobal_info)
+    unzFile file;
+    unz_global_info *pglobal_info;
+{
+    unz_s* s;
+    if (file==NULL)
+        return UNZ_PARAMERROR;
+    s=(unz_s*)file;
+    *pglobal_info=s->gi;
+    return UNZ_OK;
+}
+
+
 
 /*
   Set the current file of the zipfile to the next file.
@@ -1512,48 +1558,6 @@ extern int ZEXPORT libkml_unzGetLocalExtrafield (file,buf,len)
 }
 
 /*
-  Close the file in zip opened with unzipOpenCurrentFile
-  Return UNZ_CRCERROR if all the file was read but the CRC is not good
-*/
-extern int ZEXPORT libkml_unzCloseCurrentFile (file)
-    unzFile file;
-{
-    int err=UNZ_OK;
-
-    unz_s* s;
-    file_in_zip_read_info_s* pfile_in_zip_read_info;
-    if (file==NULL)
-        return UNZ_PARAMERROR;
-    s=(unz_s*)file;
-    pfile_in_zip_read_info=s->pfile_in_zip_read;
-
-    if (pfile_in_zip_read_info==NULL)
-        return UNZ_PARAMERROR;
-
-
-    if ((pfile_in_zip_read_info->rest_read_uncompressed == 0) &&
-        (!pfile_in_zip_read_info->raw))
-    {
-        if (pfile_in_zip_read_info->crc32 != pfile_in_zip_read_info->crc32_wait)
-            err=UNZ_CRCERROR;
-    }
-
-
-    TRYFREE(pfile_in_zip_read_info->read_buffer);
-    pfile_in_zip_read_info->read_buffer = NULL;
-    if (pfile_in_zip_read_info->stream_initialised)
-        inflateEnd(&pfile_in_zip_read_info->stream);
-
-    pfile_in_zip_read_info->stream_initialised = 0;
-    TRYFREE(pfile_in_zip_read_info);
-
-    s->pfile_in_zip_read=NULL;
-
-    return err;
-}
-
-
-/*
   Get the global comment string of the ZipFile, in the szComment buffer.
   uSizeBuf is the size of the szComment buffer.
   return the number of byte copied or an error code <0
@@ -1652,9 +1656,9 @@ extern unzFile ZEXPORT libkml_unzAttach (stream, pzlib_filefunc_def)
     zlib_filefunc_def* pzlib_filefunc_def;
 {
     unz_s us;
-    init_unz_s(&us);
     
     unz_s *s;
+
     uLong central_pos,uL;
 
     uLong number_disk;          /* number of the current dist, used for
@@ -1666,6 +1670,8 @@ extern unzFile ZEXPORT libkml_unzAttach (stream, pzlib_filefunc_def)
                                    (same than number_entry on nospan) */
 
     int err=UNZ_OK;
+
+	init_unz_s(&us);
 
     if (libkml_unz_copyright[0]!=' ')
         return NULL;

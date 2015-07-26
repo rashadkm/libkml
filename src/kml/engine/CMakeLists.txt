@@ -5,6 +5,4 @@ build_target(
   NAME kmlengine
   SRCS ${SRCS}
   INCS ${INCS}
-  DEPENDS kmlbase;kmldom)
-
-
+  DEPENDS kmlbase kmldom)
