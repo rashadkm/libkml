@@ -34,7 +34,7 @@
 #include "kml/base/file.h"
 #include <windows.h>
 #include <tchar.h>
-#include <xstring>
+//#include <xstring>
 #include <algorithm>
 
 namespace kmlbase {
@@ -42,7 +42,7 @@ namespace kmlbase {
 // Internal to the win32 file class. We need a conversion from string to
 // LPCWSTR.
 static std::wstring Str2Wstr(const string& str) {
-  std::wstring wstr(str.length(), L'');
+  std::wstring wstr(str.length(), L' ');
   std::copy(str.begin(), str.end(), wstr.begin());
   return wstr;
 }
@@ -62,7 +62,7 @@ bool File::Exists(const string& full_path) {
     return false;
   }
   std::wstring wstr = Str2Wstr(full_path);
-  DWORD attrs = ::GetFileAttributes(wstr.c_str());
+  DWORD attrs = ::GetFileAttributesW(wstr.c_str());
   return (attrs != INVALID_FILE_ATTRIBUTES) &&
     ((attrs & FILE_ATTRIBUTE_DIRECTORY) == 0);
 }
@@ -72,15 +72,15 @@ bool File::Delete(const string& filepath) {
     return false;
   }
   std::wstring wstr = Str2Wstr(filepath);
-  return ::DeleteFile(wstr.c_str()) ? true : false;
+  return ::DeleteFileW(wstr.c_str()) ? true : false;
 }
 
 static const unsigned int BUFSIZE = 1024;
 DWORD dwBufSize = BUFSIZE;
 DWORD dwRetVal;
-TCHAR lpPathBuffer[BUFSIZE];
+WCHAR lpPathBuffer[BUFSIZE];
 UINT uRetVal;
-TCHAR szTempName[BUFSIZE];
+WCHAR szTempName[BUFSIZE];
 
 // http://msdn.microsoft.com/en-us/library/aa363875(VS.85).aspx
 bool File::CreateNewTempFile(string* path) {
@@ -88,12 +88,12 @@ bool File::CreateNewTempFile(string* path) {
     return false;
   }
   // Get the temp path.
-  dwRetVal = ::GetTempPath(dwBufSize, lpPathBuffer);
+  dwRetVal = ::GetTempPathW(dwBufSize, lpPathBuffer);
   if (dwRetVal > dwBufSize || (dwRetVal == 0)) {
     return false;
   }
   // Create a temporary file.
-  uRetVal = ::GetTempFileName(lpPathBuffer, TEXT("libkml"), 0, szTempName);
+  uRetVal = ::GetTempFileNameW(lpPathBuffer, L"libkml", 0, szTempName);
   if (uRetVal == 0) {
     return false;
   }
