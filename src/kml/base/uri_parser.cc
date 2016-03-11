@@ -26,59 +26,26 @@
 // This file contains the implementation of the internal UriParser class.
 
 #include "kml/base/uri_parser.h"
-#include <string.h>  // memset()
-#include "uriparser/Uri.h"
+#include <algorithm>
+#include <cstring>
+//#include "uriparser/Uri.h"
 
 namespace kmlbase {
 
-class UriParserPrivate {
- public:
-  UriParserPrivate() {
-   // Initialize the UriUriA struct this class wraps to a sane state.
-   memset((void *)&uri_, 0, sizeof(UriUriA));
-  }
-
-  ~UriParserPrivate() {
-    uriFreeUriMembersA(&uri_);
-  }
-
-  UriUriA* get_mutable_uri() {
-    return &uri_;
-  }
-
-  UriUriA* get_uri() const {
-    return const_cast<UriUriA*>(&uri_);
-  }
-
-  // This helper function detects the existence of the given component and
-  // converts it to a string if one is supplied.  If this component does not
-  // exist false is returned.  If the component does exist true is returned.
-  bool GetUriComponent(const UriTextRangeA& text_range,
-                       string* output) const {
-    if (!text_range.first || !text_range.afterLast) {
-      return false;
-    }
-    if (output) {
-      output->assign(text_range.first, text_range.afterLast - text_range.first);
-    }
-    return true;
-  }
-
- private:
-  UriUriA uri_;
-};
-
 UriParser* UriParser::CreateFromParse(const char* str) {
+  
   UriParser* uri_parser = new UriParser;
   if (uri_parser->Parse(str)) {
     return uri_parser;
   }
   delete uri_parser;
+  
   return NULL;
 }
 
 UriParser* UriParser::CreateResolvedUri(const char* base,
                                         const char* relative) {
+  /*
   boost::scoped_ptr<UriParser> base_uri(CreateFromParse(base));
   boost::scoped_ptr<UriParser> relative_uri(CreateFromParse(relative));
   if (!base_uri.get() || !relative_uri.get()) {
@@ -89,41 +56,242 @@ UriParser* UriParser::CreateResolvedUri(const char* base,
     return resolved_uri;
   }
   delete resolved_uri;
+  */
   return NULL;
 }
 
-UriParser::UriParser() {
-  uri_parser_private_.reset(new UriParserPrivate);
+UriParser::UriParser()  
+  : m_ErrorCode( UriParserError_Uninitialized ) {
+  //  uri_parser_private_.reset(new UriParserPrivate);
 }
 
 UriParser::~UriParser() {
 }
 
-bool UriParser::Parse(const char* str) {
-  UriParserStateA state;
-  state.uri = uri_parser_private_->get_mutable_uri();
-  if (uriParseUriA(&state, str) != URI_SUCCESS) {
-    uriFreeUriMembersA(uri_parser_private_->get_mutable_uri());
-    return false;
-  }
+bool UriParser::Parse(const char* CurrentString) {
+  /*
+   *	<scheme>:<scheme-specific-part>
+   *	<scheme> := [a-z\+\-\.]+
+   *	For resiliency, programs interpreting URLs should treat upper case letters as equivalent to lower case in scheme names
+   */
+  
+  // try to read scheme
+  {
+    const char* LocalString = strchr( CurrentString, ':' );
+
+		if ( !LocalString )
+		{
+		  m_ErrorCode = UriParserError_NoUrlCharacter;
+		  return false;		  
+		}
+
+		// save the scheme name
+		m_Scheme = std::string( CurrentString, LocalString - CurrentString );
+
+		if ( !IsSchemeValid( m_Scheme ) )
+		{
+		  m_ErrorCode = UriParserError_InvalidSchemeName;
+		  return false;
+		}
+
+		// scheme should be lowercase
+		std::transform( m_Scheme.begin(), m_Scheme.end(), m_Scheme.begin(), ::tolower );
+
+		// skip ':'
+		CurrentString = LocalString+1;
+	}
+
+	/*
+	 *	//<user>:<password>@<host>:<port>/<url-path>
+	 *	any ":", "@" and "/" must be normalized
+	 */
+
+	// skip "//"
+  if ( *CurrentString++ != '/' ) { m_ErrorCode = UriParserError_NoDoubleSlash; return false; }
+  if ( *CurrentString++ != '/' ) {  m_ErrorCode = UriParserError_NoDoubleSlash; return false; }
+
+	// check if the user name and password are specified
+	bool bHasUserName = false;
+
+	const char* LocalString = CurrentString;
+
+	while ( *LocalString )
+	{
+		if ( *LocalString == '@' )
+		{
+			// user name and password are specified
+			bHasUserName = true;
+			break;
+		}
+		else if ( *LocalString == '/' )
+		{
+			// end of <host>:<port> specification
+			bHasUserName = false;
+			break;
+		}
+
+		LocalString++;
+	}
+
+	// user name and password
+	LocalString = CurrentString;
+
+	if ( bHasUserName )
+	{
+		// read user name
+		while ( *LocalString && *LocalString != ':' && *LocalString != '@' ) LocalString++;
+
+		m_UserName = std::string( CurrentString, LocalString - CurrentString );
+
+		// proceed with the current pointer
+		CurrentString = LocalString;
+
+		if ( *CurrentString == ':' )
+		{
+			// skip ':'
+			CurrentString++;
+
+			// read password
+			LocalString = CurrentString;
+
+			while ( *LocalString && *LocalString != '@' ) LocalString++;
+
+			m_Password = std::string( CurrentString, LocalString - CurrentString );
+
+			CurrentString = LocalString;
+		}
+
+		// skip '@'
+		if ( *CurrentString != '@' )
+		{
+		  m_ErrorCode = UriParserError_NoAtSign;
+		  return false;
+		}
+
+		CurrentString++;
+	}
+
+	bool bHasBracket = ( *CurrentString == '[' );
+
+	// go ahead, read the host name
+	LocalString = CurrentString;
+
+	while ( *LocalString )
+	{
+		if ( bHasBracket && *LocalString == ']' )
+		{
+			// end of IPv6 address
+			LocalString++;
+			break;
+		}
+		else if ( !bHasBracket && ( *LocalString == ':' || *LocalString == '/' ) )
+		{
+			// port number is specified
+			break;
+		}
+
+		LocalString++;
+	}
+
+	m_Host = std::string( CurrentString, LocalString - CurrentString );
+
+	CurrentString = LocalString;
+
+	// is port number specified?
+	if ( *CurrentString == ':' )
+	{
+		CurrentString++;
+
+		// read port number
+		LocalString = CurrentString;
+
+		while ( *LocalString && *LocalString != '/' ) LocalString++;
+
+		m_Port = std::string( CurrentString, LocalString - CurrentString );
+
+		CurrentString = LocalString;
+	}
+
+	// end of string
+	if ( !*CurrentString )
+	{
+	  m_ErrorCode = UriParserError_UnexpectedEndOfLine;
+	  return false;
+	}
+
+	// skip '/'
+	if ( *CurrentString != '/' )
+	{
+	  m_ErrorCode = UriParserError_NoSlash;
+	  return false;
+	}
+
+	CurrentString++;
+
+	// parse the path
+	LocalString = CurrentString;
+
+	while ( *LocalString && *LocalString != '#' && *LocalString != '?' ) LocalString++;
+
+	m_Path = std::string( CurrentString, LocalString - CurrentString );
+
+	CurrentString = LocalString;
+
+	// check for query
+	if ( *CurrentString == '?' )
+	{
+		// skip '?'
+		CurrentString++;
+
+		// read query
+		LocalString = CurrentString;
+
+		while ( *LocalString && *LocalString != '#' ) LocalString++;
+
+		m_Query = std::string( CurrentString, LocalString - CurrentString );
+
+		CurrentString = LocalString;
+	}
+
+	// check for fragment
+	if ( *CurrentString == '#' )
+	{
+		// skip '#'
+		CurrentString++;
+
+		// read fragment
+		LocalString = CurrentString;
+
+		while ( *LocalString ) LocalString++;
+
+		m_Fragment = std::string( CurrentString, LocalString - CurrentString );
+
+		CurrentString = LocalString;
+	}
+
+	m_ErrorCode = UriParserError_Ok;
+
   return true;
 }
 
 bool UriParser::Normalize() {
-  return uriNormalizeSyntaxA(uri_parser_private_->get_mutable_uri()) ==
-                             URI_SUCCESS;
+  return false; // uriNormalizeSyntaxA(uri_parser_private_->get_mutable_uri()) ==   URI_SUCCESS;
 }
 
 bool UriParser::Resolve(const UriParser& base, const UriParser& relative) {
-  return uriAddBaseUriA(uri_parser_private_->get_mutable_uri(),
+  return false; /*uriAddBaseUriA(uri_parser_private_->get_mutable_uri(),
                         relative.uri_parser_private_->get_uri(),
-                        base.uri_parser_private_->get_uri()) == URI_SUCCESS;
+                        base.uri_parser_private_->get_uri()) == URI_SUCCESS; */
 }
 
 bool UriParser::ToString(string* output) const {
   if (!output) {
     return false;
   }
+
+
+  *output = m_Scheme + m_Host + m_Port + m_Path+  m_Query + m_Fragment;
+  /*
   int chars_required;
   if (uriToStringCharsRequiredA(uri_parser_private_->get_mutable_uri(),
                                 &chars_required) != URI_SUCCESS) {
@@ -141,6 +309,7 @@ bool UriParser::ToString(string* output) const {
   }
   *output = dest_str;
   free(dest_str);
+  */
   return true;
 }
 
@@ -158,6 +327,7 @@ bool UriParser::UriToUnixFilename(const string& uri,
   if (!output) {
     return false;
   }
+  /*
   const int chars_required = static_cast<int>(uri.size()) + 1;
   char* filename = (char*)malloc(chars_required * sizeof(char));
   if (uriUriStringToUnixFilenameA(uri.c_str(), filename) != URI_SUCCESS) {
@@ -166,6 +336,7 @@ bool UriParser::UriToUnixFilename(const string& uri,
   }
   *output = filename;
   free(filename);
+  */
   return true;
 }
 
@@ -174,6 +345,7 @@ bool UriParser::UriToWindowsFilename(const string& uri,
   if (!output) {
     return false;
   }
+  /*
   const int chars_required = static_cast<int>(uri.size()) + 1;
   char* filename = (char*)malloc(chars_required * sizeof(char));
   if (uriUriStringToWindowsFilenameA(uri.c_str(), filename) != URI_SUCCESS) {
@@ -182,6 +354,7 @@ bool UriParser::UriToWindowsFilename(const string& uri,
   }
   *output = filename;
   free(filename);
+  */
   return true;
 }
 
@@ -199,6 +372,7 @@ bool UriParser::UnixFilenameToUri(const string& filename,
   if (!output) {
     return false;
   }
+  /*
   const int chars_required = 7 + 3 * static_cast<int>(filename.size()) + 1;
   char* uri = (char*)malloc(chars_required * sizeof(char));
   if (uriUnixFilenameToUriStringA(filename.c_str(), uri) != URI_SUCCESS) {
@@ -207,6 +381,7 @@ bool UriParser::UnixFilenameToUri(const string& filename,
   }
   *output = uri;
   free(uri);
+  */
   return true;
 }
 
@@ -215,6 +390,7 @@ bool UriParser::WindowsFilenameToUri(const string& filename,
   if (!output) {
     return false;
   }
+  /*
   const int chars_required = 8 + 3 * static_cast<int>(filename.size()) + 1;
   char* uri = (char*)malloc(chars_required * sizeof(char));
   if (uriWindowsFilenameToUriStringA(filename.c_str(), uri) != URI_SUCCESS) {
@@ -223,35 +399,71 @@ bool UriParser::WindowsFilenameToUri(const string& filename,
   }
   *output = uri;
   free(uri);
+  */
   return true;
 }
 
 bool UriParser::GetScheme(string* scheme) const {
-  return uri_parser_private_->GetUriComponent(
-      uri_parser_private_->get_uri()->scheme, scheme);
+  if ( !IsValid() && m_Scheme.empty() ) {
+    return false;
+  }
+  if ( scheme ) {
+    *scheme = m_Scheme;
+  }
+  return true;
 }
 
 bool UriParser::GetHost(string* host) const {
-  return uri_parser_private_->GetUriComponent(
-      uri_parser_private_->get_uri()->hostText, host);
+  if ( !IsValid() && m_Host.empty() ) {
+    return false;
+  }
+
+  if ( host ) {
+    *host = m_Host;
+  }
+
+    return true;
 }
 
 bool UriParser::GetPort(string* port) const {
-  return uri_parser_private_->GetUriComponent(
-      uri_parser_private_->get_uri()->portText, port);
+  
+  if ( !IsValid() ) {
+    return false;
+  }
+  int p = atoi( m_Port.c_str() );
+  if ( p <= 0 || p > 65535 ) {
+    return false;
+  }
+  /* if ( port ) { *port = p; } */
+  
+  if ( port ) { *port = m_Port;  }
+
+  return true;
 }
 
 bool UriParser::GetQuery(string* query) const {
-  return uri_parser_private_->GetUriComponent(
-      uri_parser_private_->get_uri()->query, query);
+  if ( !IsValid() && m_Query.empty() ) {
+    return false;
+  }
+  if ( query ) {
+    *query = m_Query;
+  }
+  return true;
 }
 
 bool UriParser::GetFragment(string* fragment) const {
-  return uri_parser_private_->GetUriComponent(
-      uri_parser_private_->get_uri()->fragment, fragment);
+  if ( !IsValid() && m_Fragment.empty() ) {
+    return false;
+  }
+  if ( fragment ) {
+    *fragment = m_Fragment;
+  }
+
+  return true;
 }
 
 bool UriParser::GetPath(string* path) const {
+  /*
   if (!uri_parser_private_->get_uri()->pathHead ||
       !uri_parser_private_->get_uri()->pathTail) {
     return false;
@@ -272,6 +484,7 @@ bool UriParser::GetPath(string* path) const {
       }
     }
   }
+  */
   return true;
 }
 

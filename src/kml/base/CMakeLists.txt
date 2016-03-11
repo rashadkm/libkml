@@ -4,8 +4,8 @@ include_directories(${MINIZIP_INCLUDE_DIR})
 super_find_package(ZLIB)
 include_directories(${ZLIB_INCLUDE_DIR})
 
-super_find_package(UriParser)
-include_directories(${URIPARSER_INCLUDE_DIR})
+#super_find_package(UriParser)
+#include_directories(${URIPARSER_INCLUDE_DIR})
 
 file(GLOB SRCS "*.cc"
   contrib/minizip/unzip.c
@@ -70,4 +70,5 @@ build_target(
   SRCS ${SRCS}
   INCS ${INCS}
   DEPENDS ${KMLBASE_DEPENDS}
-  LINKS ${ZLIB_LIBRARY} ${MINIZIP_LIBRARIES} ${URIPARSER_LIBRARY} ${EXPAT_LIBRARY} )
+  LINKS ${ZLIB_LIBRARY} ${MINIZIP_LIBRARIES}  ${EXPAT_LIBRARY} )
+#${URIPARSER_LIBRARY}

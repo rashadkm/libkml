@@ -23,8 +23,8 @@
 // OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 // ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-// This file contains the declaration of the internal UriParser class that
-// front-ends the third_party/uriparser in a C++ API.  See kml/engine/kml_uri.h
+// This file contains the declaration of the internal UriParser class. This
+// code is partly based on LUrlParser code.  See kml/engine/kml_uri.h
 // for the public API to URI handling.
 
 #ifndef KML_BASE_URI_PARSER_H__
@@ -35,11 +35,52 @@
 
 namespace kmlbase {
 
-class UriParserPrivate;
+  //class UriParserPrivate;
 
 // This class is a memory-safe wrapper to uriparser's UriUriA.
 class UriParser {
  public:
+
+    
+  enum UriParserError
+  {
+    UriParserError_Ok = 0,
+    UriParserError_Uninitialized = 1,
+    UriParserError_NoUrlCharacter = 2,
+    UriParserError_InvalidSchemeName = 3,
+    UriParserError_NoDoubleSlash = 4,
+    UriParserError_NoAtSign = 5,
+    UriParserError_UnexpectedEndOfLine = 6,
+    UriParserError_NoSlash = 7
+  };
+
+
+  UriParserError m_ErrorCode;
+  std::string m_Scheme;
+  std::string m_Host;
+  std::string m_Port;
+  std::string m_Path;
+  std::string m_Query;
+  std::string m_Fragment;
+  std::string m_UserName;
+  std::string m_Password;
+
+  /// return 'true' if the parsing was successful
+  bool IsValid() const { return m_ErrorCode == UriParserError_Ok; }
+
+  // check if the scheme name is valid
+
+  static bool IsSchemeValid( const std::string& sname ) {
+    for ( size_t i = 0; i < sname.size(); ++i  ) {
+      char c = sname[i];
+      if ( !isalpha( c ) && c != '+' && c != '-' && c != '.' )
+	return false;
+    }
+    
+    return true;
+  }
+
+
   // UriParser is always constructed from one of the following static methods.
   // The main intentended usage of UriParser is within libkml and is restricted
   // to these static methods.
@@ -152,7 +193,11 @@ class UriParser {
  private:
   // UriParserPrivate hides the internals of the underlying third party
   // uriparser types from clients of this header.
-  boost::scoped_ptr<UriParserPrivate> uri_parser_private_;
+  //  boost::scoped_ptr<UriParserPrivate> uri_parser_private_;
+  
+  explicit UriParser( UriParserError ErrorCode )
+    : m_ErrorCode( ErrorCode )
+  {}
 
   // No copy construction or assignment please.
   LIBKML_DISALLOW_EVIL_CONSTRUCTORS(UriParser);
