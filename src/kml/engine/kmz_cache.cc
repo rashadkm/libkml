@@ -114,7 +114,7 @@ bool KmzCache::DoFetchAndReturnUrl(KmlUri* kml_uri, string* content,
   // 3) This is a KMZ reference _relative_ to the KMZ file.
   // PATH/foo.kmz + bar.jpg can mean either PATH/foo.kmz/bar.jpg
   // OR PATH/bar.jpg.  The following attempts the latter.
-  boost::scoped_ptr<KmlUri> kmz_relative(
+  const std::unique_ptr<KmlUri> kmz_relative(
       KmlUri::CreateRelative(kml_uri->get_kmz_url(), kml_uri->get_target()));
   if (!kmz_relative.get()) {
     return false;

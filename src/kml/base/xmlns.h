@@ -30,7 +30,7 @@
 
 #include <map>
 #include <vector>
-#include "boost/scoped_ptr.hpp"
+#include <memory>
 #include "kml/base/attributes.h"
 
 namespace kmlbase {
@@ -108,7 +108,7 @@ class Xmlns {
   Xmlns() {}
   bool Parse(const kmlbase::Attributes& attributes) {
     // Create a copy so that we can use non-const SplitByPrefix.
-    boost::scoped_ptr<Attributes> clone(attributes.Clone());
+    const std::unique_ptr<Attributes> clone(attributes.Clone());
     prefix_map_.reset(clone->SplitByPrefix("xmlns"));
     attributes.GetValue("xmlns", &default_);
     // Return true if there is a default xmlns or if there are any
@@ -116,7 +116,7 @@ class Xmlns {
     return !default_.empty() || prefix_map_.get();
   }
   string default_;
-  boost::scoped_ptr<Attributes> prefix_map_;
+  std::unique_ptr<Attributes> prefix_map_;
 };
 
 }  // end namespace kmlbase

@@ -27,7 +27,7 @@
 
 #include "kml/xsd/xsd_handler.h"
 #include <cstring>  // strcmp
-#include "boost/scoped_ptr.hpp"
+//#include<memory> unique_ptr 
 #include "kml/base/attributes.h"
 #include "kml/xsd/xsd_element.h"
 #include "kml/xsd/xsd_file.h"
@@ -113,7 +113,7 @@ void XsdHandler::StartXsElement(const Attributes& attributes) {
 // ExpatHandler::StartElement
 void XsdHandler::StartElement(const string& xs_element_name,
                               const kmlbase::StringVector& atts) {
-  boost::scoped_ptr<Attributes> attributes(Attributes::Create(atts));
+  const std::unique_ptr<Attributes> attributes(Attributes::Create(atts));
 
   if (xs_element_name.compare(kSchema) == 0) {
     xsd_file_->set_schema(XsdSchema::Create(*attributes));

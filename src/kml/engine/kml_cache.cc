@@ -26,7 +26,7 @@
 // This file contains the implementation of the KmlCache class.
 
 #include "kml/engine/kml_cache.h"
-#include "boost/scoped_ptr.hpp"
+//#include<memory> unique_ptr 
 #include "kml/engine/kml_file.h"
 #include "kml/engine/kml_uri_internal.h"
 #include "kml/engine/kmz_cache.h"
@@ -40,7 +40,7 @@ KmlCache::KmlCache(kmlbase::NetFetcher* net_fetcher, size_t max_size) {
 
 KmlFilePtr KmlCache::FetchKmlRelative(const string& base,
                                       const string& target) {
-  boost::scoped_ptr<KmlUri> kml_uri(KmlUri::CreateRelative(base, target));
+  const std::unique_ptr<KmlUri> kml_uri(KmlUri::CreateRelative(base, target));
   if (!kml_uri.get()) {
     // Failed to create KmlUri likely due to bad url or href.
     return NULL;
@@ -76,7 +76,7 @@ KmlFilePtr KmlCache::FetchKmlAbsolute(const string& kml_uri) {
 bool KmlCache::FetchDataRelative(const string& base,
                                  const string& target,
                                  string* data) {
-  boost::scoped_ptr<KmlUri> kml_uri(KmlUri::CreateRelative(base, target));
+  const std::unique_ptr<KmlUri> kml_uri(KmlUri::CreateRelative(base, target));
   // KmzCache::Fetch has NULL pointer check.
   if (kmz_file_cache_->DoFetch(kml_uri.get(), data)) {
     return true;

@@ -75,7 +75,7 @@ class XmlSerializer : public Serializer {
    if (!root || !newline || !indent || !output) {
      return;
    }
-   boost::scoped_ptr<XmlSerializer> xml_ostream_serializer(
+   const std::unique_ptr<XmlSerializer> xml_ostream_serializer(
        new XmlSerializer(newline, indent, output));
    root->Serialize(*xml_ostream_serializer);
  }

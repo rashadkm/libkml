@@ -87,7 +87,7 @@ ZipFile* ZipFile::Create(const char* file_path) {
 
 // Private. Class constructed with static methods.
 ZipFile::ZipFile(const string& data)
-  : minizip_file_(NULL), data_(data),
+  : data_(data),
     max_uncompressed_file_size_(kMaxUncompressedZipSize) {
   // Fill the table of contents for this zipfile.
   zlib_filefunc_def api;
@@ -186,7 +186,7 @@ bool ZipFile::GetEntry(const string& path_in_zip,
     return false;
   }
 
-  boost::scoped_ptr<UnzFileHelper> unzfilehelper(new UnzFileHelper(unzfile));
+  const std::unique_ptr<UnzFileHelper> unzfilehelper(new UnzFileHelper(unzfile));
   unz_file_info finfo;
   if (libkml_unzLocateFile(unzfilehelper->get_unzfile(),
                     path_in_zip.c_str(), 0) != UNZ_OK ||

@@ -27,7 +27,7 @@
 
 #include "kml/engine/kml_uri.h"
 #include "kml/engine/kml_uri_internal.h"
-#include "boost/scoped_ptr.hpp"
+//#include<memory> unique_ptr 
 #include "kml/base/uri_parser.h"
 
 using kmlbase::UriParser;
@@ -41,7 +41,7 @@ KmlUri::KmlUri(const string& base, const string& target)
     target_uri_(kmlbase::UriParser::CreateFromParse(target.c_str())) {
 }
 
-// This is required to keep the point of instatiation of the scoped_ptr
+// This is required to keep the point of instatiation of the unique_ptr
 // template arg where the full class definition (of UriParser) is known.
 KmlUri::~KmlUri() {
 }
@@ -53,7 +53,7 @@ KmlUri* KmlUri::CreateRelative(const string& base,
   // To create a valid KmlUri the base must be absolute, the target must be
   // valid and the resolution must succeed.  If any of these are false then
   // NULL is returned.  The returned KmlUri object must be managed by the
-  // caller; boost::scoped_ptr is recommended.
+  // caller; std::unique_ptr is recommended.
   // TODO: streamline UriParser::CreateFromParse, ResolveUri, GetFetchableUri,
   // and KmzSplit, possibly push all of KmlUri into kmlbase::UriParser.
   string fetchable_url;
@@ -75,13 +75,13 @@ KmlUri* KmlUri::CreateRelative(const string& base,
 // which is fully encapsulated here.
 bool ResolveUri(const string& base, const string& relative,
                 string* result) {
-  boost::scoped_ptr<UriParser> uri_parser(
+  const std::unique_ptr<UriParser> uri_parser(
       UriParser::CreateResolvedUri(base.c_str(), relative.c_str()));
   return uri_parser.get() && uri_parser->ToString(result);
 }
 
 bool NormalizeUri(const string& uri, string* result) {
-  boost::scoped_ptr<UriParser> uri_parser(
+  const std::unique_ptr<UriParser> uri_parser(
       UriParser::CreateFromParse(uri.c_str()));
   return uri_parser.get() && uri_parser->Normalize() &&
          uri_parser->ToString(result);
@@ -125,7 +125,7 @@ bool FilenameToUri(const string& filename, string* output) {
 bool SplitUri(const string& uri, string* scheme, string* host,
               string* port, string* path, string* query,
               string* fragment) {
-  boost::scoped_ptr<UriParser> uri_parser(
+  std::unique_ptr<UriParser> uri_parser(
       UriParser::CreateFromParse(uri.c_str()));
   if (!uri_parser.get()) {
     return false;
@@ -153,7 +153,7 @@ bool SplitUri(const string& uri, string* scheme, string* host,
 }
 
 bool SplitUriPath(const string& uri, string* path) {
-  boost::scoped_ptr<UriParser> uri_parser(
+  const std::unique_ptr<UriParser> uri_parser(
       UriParser::CreateFromParse(uri.c_str()));
   if (!uri_parser.get()) {
     return false;
@@ -162,7 +162,7 @@ bool SplitUriPath(const string& uri, string* path) {
 }
 
 bool SplitUriFragment(const string& uri, string* fragment) {
-  boost::scoped_ptr<UriParser> uri_parser(
+  const std::unique_ptr<UriParser> uri_parser(
       UriParser::CreateFromParse(uri.c_str()));
   if (!uri_parser.get()) {
     return false;
@@ -171,7 +171,7 @@ bool SplitUriFragment(const string& uri, string* fragment) {
 }
 
 bool GetFetchableUri(const string& uri, string* fetchable_uri) {
-  boost::scoped_ptr<UriParser> uri_parser(
+  const std::unique_ptr<UriParser> uri_parser(
       UriParser::CreateFromParse(uri.c_str()));
   if (!uri_parser.get()) {
     return false;

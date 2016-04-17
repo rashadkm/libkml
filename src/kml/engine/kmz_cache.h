@@ -29,7 +29,7 @@
 #define KML_ENGINE_KMZ_CACHE_H__
 
 #include <map>
-#include "boost/scoped_ptr.hpp"
+//#include<memory> unique_ptr 
 #include "kml/base/memory_file.h"
 #include "kml/base/net_cache.h"
 #include "kml/engine/kmz_file.h"
@@ -75,7 +75,7 @@ class KmzCache : public kmlbase::NetCache<KmzFile> {
   bool FetchFromCache(KmlUri* kml_uri, string* content) const;
 
  private:
-  boost::scoped_ptr<MemoryFileCache> memory_file_cache_;
+  std::unique_ptr<MemoryFileCache> memory_file_cache_;
 };
 
 }  // end namespace kmlengine

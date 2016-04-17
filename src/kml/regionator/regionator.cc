@@ -175,7 +175,7 @@ bool Regionator::RegionateAligned(RegionHandler& rhandler,
       kmldom::KmlFactory::GetFactory()->CreateRegion();
   aligned_region->set_latlonaltbox(llab);
   aligned_region->set_lod(CloneLod(region->get_lod()));
-  boost::scoped_ptr<Regionator> regionator(new Regionator(rhandler,
+  const std::unique_ptr<Regionator> regionator(new Regionator(rhandler,
                                                           aligned_region));
   regionator->SetNaturalRegion(region);
   return regionator->Regionate(output_directory);

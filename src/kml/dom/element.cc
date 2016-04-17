@@ -94,7 +94,7 @@ void Element::AddUnknownAttributes(Attributes* attributes) {
         xmlns_->MergeAttributes(*xmlns);
         delete xmlns;
       } else {
-        xmlns_.reset(xmlns);
+	xmlns_.reset(xmlns);
       }
     }
     // Split out xmlns= itself.

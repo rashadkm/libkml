@@ -24,7 +24,7 @@
 // ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "kml/convenience/convenience.h"
-#include "boost/scoped_ptr.hpp"
+//#include<memory> unique_ptr 
 #include "kml/base/attributes.h"
 #include "kml/base/date_time.h"
 #include "kml/base/math_util.h"
@@ -146,7 +146,7 @@ LookAtPtr CreateLookAt(double latitude, double longitude, double altitude,
 }
 
 PointPtr CreatePointFromLatLonAtts(const char** atts) {
-  boost::scoped_ptr<Attributes> attributes(Attributes::Create(atts));
+  const std::unique_ptr<Attributes> attributes(Attributes::Create(atts));
   if (attributes.get()) {
     double latitude;
     double longitude;

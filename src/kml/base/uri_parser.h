@@ -30,8 +30,8 @@
 #ifndef KML_BASE_URI_PARSER_H__
 #define KML_BASE_URI_PARSER_H__
 
+#include <memory>
 #include "kml/base/util.h"
-#include "boost/scoped_ptr.hpp"
 
 namespace kmlbase {
 
@@ -56,7 +56,7 @@ class UriParser {
 
   // The destructor must perform uriparser-specific operations to release
   // resources.  It is highly recommdended that a UriParser* be managed
-  // with boost::scoped_ptr or equivalent (as is done in CreateResolveUri).
+  // with std::unique_ptr or equivalent (as is done in CreateResolveUri).
   ~UriParser();
 
   // This parses the given URI string into the UriParser object and obliterates
@@ -152,7 +152,7 @@ class UriParser {
  private:
   // UriParserPrivate hides the internals of the underlying third party
   // uriparser types from clients of this header.
-  boost::scoped_ptr<UriParserPrivate> uri_parser_private_;
+  std::unique_ptr<UriParserPrivate> uri_parser_private_;
 
   // No copy construction or assignment please.
   LIBKML_DISALLOW_EVIL_CONSTRUCTORS(UriParser);

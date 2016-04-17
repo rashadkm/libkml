@@ -30,7 +30,7 @@
 
 #include <ostream>
 #include <vector>
-#include "boost/scoped_ptr.hpp"
+//#include<memory> unique_ptr 
 #include "kml/base/attributes.h"
 #include "kml/base/referent.h"
 #include "kml/base/xml_namespaces.h"

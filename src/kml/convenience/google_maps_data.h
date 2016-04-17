@@ -34,7 +34,7 @@
 #define KML_CONVENIENCE_GOOGLE_MAPS_DATA_H_
 
 #include <exception>
-#include "boost/scoped_ptr.hpp"
+//#include<memory> unique_ptr 
 #include "kml/dom.h"
 
 // TODO: move Bbox to kmlbase
@@ -222,7 +222,7 @@ class GoogleMapsData {
  private:
   // Use static Create().
   GoogleMapsData();
-  boost::scoped_ptr<HttpClient> http_client_;
+  std::unique_ptr<HttpClient> http_client_;
   const string scope_;
 };
 

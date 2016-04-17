@@ -87,7 +87,7 @@ ElementPtr Parser::ParseAtom(const string& atom, string* errors) {
   // 4) KmlHandler knows that <atom:feed> is kmldom::AtomFeed
   attributes.SetValue("xmlns", "http://www.opengis.net/kml/2.2");
   attributes.SetValue("xmlns:atom", "http://www.w3.org/2005/Atom");
-  boost::scoped_ptr<kmlbase::Xmlns> xmlns(kmlbase::Xmlns::Create(attributes));
+  const std::unique_ptr<kmlbase::Xmlns> xmlns(kmlbase::Xmlns::Create(attributes));
   kmlbase::ExpatHandlerNs expat_handler_ns(&kml_handler, xmlns.get());
   if (kmlbase::ExpatParser::ParseString(atom, &expat_handler_ns, errors,
                                         true)) {

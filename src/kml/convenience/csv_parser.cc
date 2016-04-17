@@ -28,7 +28,7 @@
 #include "kml/convenience/csv_parser.h"
 
 #include <vector>
-#include "boost/scoped_ptr.hpp"
+//#include<memory> unique_ptr 
 #include "kml/base/csv_splitter.h"
 #include "kml/base/string_util.h"
 #include "kml/convenience/convenience.h"
@@ -58,7 +58,7 @@ bool CsvParser::ParseCsv(kmlbase::CsvSplitter* csv_splitter,
   if (!csv_splitter->SplitCurrentLine(&schema)) {
     return false;
   }
-  boost::scoped_ptr<CsvParser> csv_parser(
+  const std::unique_ptr<CsvParser> csv_parser(
       new CsvParser(csv_splitter, csv_parser_handler));
   CsvParserStatus schema_status = csv_parser->SetSchema(schema);
   // Send the schema parsing status out just like any other line.

@@ -62,7 +62,7 @@ GoogleSpreadsheets::GoogleSpreadsheets()
   : scope_(GetScope()) {
 }
 
-// Keep POI of scoped_ptr<GoogleHttpClient>'s dtor out of .h
+// Keep POI of unique_ptr<GoogleHttpClient>'s dtor out of .h
 GoogleSpreadsheets::~GoogleSpreadsheets() {
 }
 

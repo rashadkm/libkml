@@ -34,7 +34,7 @@
 
 #include <string>
 #include <vector>
-#include "boost/scoped_ptr.hpp"
+//#include<memory> unique_ptr 
 #include "kml/dom.h"
 
 namespace kmlconvenience {
@@ -94,7 +94,7 @@ class GoogleDocList {
  private:
   // Use static Create().
   GoogleDocList();
-  boost::scoped_ptr<HttpClient> http_client_;
+  std::unique_ptr<HttpClient> http_client_;
   const string scope_;
 };
 
