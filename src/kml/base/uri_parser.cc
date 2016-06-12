@@ -24,6 +24,8 @@
 // ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 // This file contains the implementation of the internal UriParser class.
+// kmlbase::UriParser is based on LUriParser
+// from https://github.com/corporateshark/LUrlParser
 
 #include "kml/base/uri_parser.h"
 #include <algorithm>
