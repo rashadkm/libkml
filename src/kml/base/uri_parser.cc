@@ -57,8 +57,8 @@ UriParser* UriParser::CreateResolvedUri(const string base,
   
   UriParser* resolved_uri = new UriParser;
   if (resolved_uri->Resolve(*base_uri.get(), relative)) {
-      return resolved_uri;
-    }
+    return resolved_uri;
+  }
   delete resolved_uri;
   
   return NULL;
@@ -114,6 +114,9 @@ bool UriParser::Parse(const char* CurrentString) {
 	// skip "//"
   if ( *CurrentString++ != '/' ) { m_ErrorCode = UriParserError_NoDoubleSlash; return false; }
   if ( *CurrentString++ != '/' ) {  m_ErrorCode = UriParserError_NoDoubleSlash; return false; }
+
+  if(m_Scheme == "file")
+    if ( *CurrentString++ != '/' ) {  m_ErrorCode = UriParserError_NoDoubleSlash; return false; }
 
 	// check if the user name and password are specified
 	bool bHasUserName = false;
@@ -285,23 +288,13 @@ bool UriParser::Normalize() {
 
  bool UriParser::Resolve(const UriParser& base, const std::string relative) {
 
-
-  //  string rurl;
-  //  relative.ToString(&rurl);
-
-    string url = base.baseuri() + "/" + relative ;
-
-    //    std::cerr <<  "urlxx=" <<url << std::endl;
-
-
-  if ( this->Parse( url.c_str()  ) ) {
-    return true;
-  }
+   string url = base.baseuri() + "/" + relative ;
+    
+   if ( this->Parse( url.c_str()  ) ) {
+     return true;
+   }
  return false;
-  //  return false;
-  /*uriAddBaseUriA(uri_parser_private_->get_mutable_uri(),
-                        relative.uri_parser_private_->get_uri(),
-                        base.uri_parser_private_->get_uri()) == URI_SUCCESS; */
+
  }
 
 bool UriParser::ToString(string* output) const {
@@ -339,6 +332,9 @@ bool UriParser::ToString(string* output) const {
   *output = dest_str;
   free(dest_str);
   */
+  if( ( *output).empty() )
+    return false;
+  
   return true;
 }
 
@@ -487,10 +483,9 @@ bool UriParser::GetFragment(string* fragment) const {
   }
   if ( fragment ) {
     *fragment = m_Fragment;
-      return true;
   }
+  return true;
 
-  return false;
 }
 
 bool UriParser::GetPath(string* path) const {
