@@ -55,7 +55,7 @@ if(NOT DEFINED PKGCONFIG_INSTALL_DIR)
   set(PKGCONFIG_INSTALL_DIR "${LIB_INSTALL_DIR}/pkgconfig")
 endif(NOT DEFINED PKGCONFIG_INSTALL_DIR)
 
-if(WIN32 AND NOT CYGWIN)
+if(WIN32 AND NOT CYGWIN AND NOT MINGW)
   set(DEF_INSTALL_CMAKE_DIR cmake)
 else()
   set(DEF_INSTALL_CMAKE_DIR lib/cmake/libkml)
@@ -100,6 +100,10 @@ endif()
 
 include_directories(${Boost_INCLUDE_DIRS})
 
+if(NOT BUILD_SHARED_LIBS)    
+    add_definitions(-DXML_STATIC) #for static expat    
+endif()
+
 #expat is dependency for kmlbase and kmldom
 super_find_package(EXPAT)
 include_directories(${EXPAT_INCLUDE_DIRS})
@@ -131,7 +135,15 @@ if(BUILD_EXAMPLES)
   add_subdirectory(examples)
 endif()
 
+
 if(NOT WIN32)
+if(CMAKE_BUILD_TYPE STREQUAL "")
+set(CONFIG_TYPE "NOCONFIG")
+else()
+  string(TOUPPER ${CMAKE_BUILD_TYPE} CONFIG_TYPE)
+endif()
+
+if(NOT WIN32 OR MINGW)
   configure_file("${CMAKE_SOURCE_DIR}/cmake/libkml.pc.in"
     "${CMAKE_BINARY_DIR}/libkml.pc" @ONLY)
   install(FILES ${CMAKE_BINARY_DIR}/libkml.pc

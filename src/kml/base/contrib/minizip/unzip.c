@@ -35,6 +35,7 @@ woven in by Terry Thorsen 1/2003.
  */
 
 
+#define Z_U4 unsigned long
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -152,7 +153,7 @@ typedef struct
 #ifndef NOUNCRYPT
   unsigned long keys[3];     /* keys defining the pseudo-random sequence */
   /*  const z_crc_t* pcrc_32_tab; */
-  const unsigned long* pcrc_32_tab;
+  const Z_U4* pcrc_32_tab;
 #endif
 
 } unz_s;
