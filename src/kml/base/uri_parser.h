@@ -86,11 +86,11 @@ class UriParser {
   // to these static methods.
 
   // This creates a UriParser from a URI in string form.
-  static UriParser* CreateFromParse(const char* str);
+  static UriParser* CreateFromParse(const string& str);
 
   // This creates a UriParser representing the resolution of the given
   // relative URI against the given base URI.
-  static UriParser* CreateResolvedUri(const char* base, const char* relative);
+  static UriParser* CreateResolvedUri(const std::string base, const std::string relative);
 
   // The intended usage is to create a UriParser from a static method.
   UriParser();
@@ -115,7 +115,7 @@ class UriParser {
   // This resolves the URI represented by the UriParser relative against the
   // URI represented by the UriParser base.  This method is intended for use
   // mainly with the CreateResolvedUri() static method.
-  bool Resolve(const UriParser& base, const UriParser& relative);
+  bool Resolve(const UriParser& base, const std::string relative);
 
   // This method saves the URI in string form into the given string.  This
   // returns false if a NULL string argument is supplied or on any internal
@@ -170,6 +170,16 @@ class UriParser {
 
   // This returns the scheme of the URI if one exists.
   bool GetScheme(string* scheme) const;
+
+  const std::string scheme() const {  return m_Scheme; }
+  const  std::string host() const {  return m_Host; }
+  const std::string port() const {  return m_Port; }
+  const std::string query() const {  return m_Query; }
+  const std::string baseuri() const {
+    return m_Scheme + "://" + m_Host + m_Port;
+  }
+
+  
 
   // This returns the host of the URI if one exists.
   bool GetHost(string* host) const;

@@ -137,12 +137,12 @@ endif()
 
 
 if(NOT WIN32)
-if(CMAKE_BUILD_TYPE STREQUAL "")
-set(CONFIG_TYPE "NOCONFIG")
-else()
-  string(TOUPPER ${CMAKE_BUILD_TYPE} CONFIG_TYPE)
+  if(CMAKE_BUILD_TYPE STREQUAL "")
+    set(CONFIG_TYPE "NOCONFIG")
+  else()
+    string(TOUPPER ${CMAKE_BUILD_TYPE} CONFIG_TYPE)
+  endif()
 endif()
-
 if(NOT WIN32 OR MINGW)
   configure_file("${CMAKE_SOURCE_DIR}/cmake/libkml.pc.in"
     "${CMAKE_BINARY_DIR}/libkml.pc" @ONLY)

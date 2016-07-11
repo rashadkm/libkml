@@ -30,14 +30,15 @@
 #include "kml/base/uri_parser.h"
 #include <algorithm>
 #include <cstring>
+#include <memory>
 //#include "uriparser/Uri.h"
 
 namespace kmlbase {
 
-UriParser* UriParser::CreateFromParse(const char* str) {
+  UriParser* UriParser::CreateFromParse(const std::string& str) {
   
   UriParser* uri_parser = new UriParser;
-  if (uri_parser->Parse(str)) {
+  if (uri_parser->Parse(str.c_str())) {
     return uri_parser;
   }
   delete uri_parser;
@@ -45,22 +46,24 @@ UriParser* UriParser::CreateFromParse(const char* str) {
   return NULL;
 }
 
-UriParser* UriParser::CreateResolvedUri(const char* base,
-                                        const char* relative) {
-  /*
-  boost::scoped_ptr<UriParser> base_uri(CreateFromParse(base));
-  boost::scoped_ptr<UriParser> relative_uri(CreateFromParse(relative));
-  if (!base_uri.get() || !relative_uri.get()) {
-    return NULL;
-  }
+UriParser* UriParser::CreateResolvedUri(const string base,
+                                        const string relative) {
+  
+  std::unique_ptr<UriParser> base_uri(CreateFromParse(base));
+  if (!base_uri.get())
+    {
+      return NULL;
+    }
+  
   UriParser* resolved_uri = new UriParser;
-  if (resolved_uri->Resolve(*base_uri.get(), *relative_uri.get())) {
-    return resolved_uri;
-  }
+  if (resolved_uri->Resolve(*base_uri.get(), relative)) {
+      return resolved_uri;
+    }
   delete resolved_uri;
-  */
+  
   return NULL;
 }
+  
 
 UriParser::UriParser()  
   : m_ErrorCode( UriParserError_Uninitialized ) {
@@ -280,11 +283,26 @@ bool UriParser::Normalize() {
   return false; // uriNormalizeSyntaxA(uri_parser_private_->get_mutable_uri()) ==   URI_SUCCESS;
 }
 
-bool UriParser::Resolve(const UriParser& base, const UriParser& relative) {
-  return false; /*uriAddBaseUriA(uri_parser_private_->get_mutable_uri(),
+ bool UriParser::Resolve(const UriParser& base, const std::string relative) {
+
+
+  //  string rurl;
+  //  relative.ToString(&rurl);
+
+    string url = base.baseuri() + "/" + relative ;
+
+    //    std::cerr <<  "urlxx=" <<url << std::endl;
+
+
+  if ( this->Parse( url.c_str()  ) ) {
+    return true;
+  }
+ return false;
+  //  return false;
+  /*uriAddBaseUriA(uri_parser_private_->get_mutable_uri(),
                         relative.uri_parser_private_->get_uri(),
                         base.uri_parser_private_->get_uri()) == URI_SUCCESS; */
-}
+ }
 
 bool UriParser::ToString(string* output) const {
   if (!output) {
@@ -292,7 +310,16 @@ bool UriParser::ToString(string* output) const {
   }
 
 
-  *output = m_Scheme + m_Host + m_Port + m_Path+  m_Query + m_Fragment;
+  //*output = m_Scheme + m_Host + m_Port + m_Path+  m_Query + m_Fragment;
+  *output = m_Scheme +  "://" + m_Host + m_Port;
+  if( ! m_Path.empty() )
+    *output += "/" + m_Path;
+
+  if( ! m_Query.empty() )
+    *output += m_Query;
+  
+  if ( ! m_Fragment.empty() )
+    *output +=  "#" + m_Fragment;
   /*
   int chars_required;
   if (uriToStringCharsRequiredA(uri_parser_private_->get_mutable_uri(),
@@ -437,9 +464,10 @@ bool UriParser::GetPort(string* port) const {
   }
   /* if ( port ) { *port = p; } */
   
-  if ( port ) { *port = m_Port;  }
+  if ( port ) { *port = m_Port;   return true; }
 
-  return true;
+  return false;
+
 }
 
 bool UriParser::GetQuery(string* query) const {
@@ -448,19 +476,21 @@ bool UriParser::GetQuery(string* query) const {
   }
   if ( query ) {
     *query = m_Query;
+    return true;  
   }
-  return true;
+  return false;
 }
 
 bool UriParser::GetFragment(string* fragment) const {
-  if ( !IsValid() && m_Fragment.empty() ) {
+  if ( !IsValid() || m_Fragment.empty() ) {
     return false;
   }
   if ( fragment ) {
     *fragment = m_Fragment;
+      return true;
   }
 
-  return true;
+  return false;
 }
 
 bool UriParser::GetPath(string* path) const {
@@ -486,7 +516,15 @@ bool UriParser::GetPath(string* path) const {
     }
   }
   */
-  return true;
+  if ( !IsValid() || m_Path.empty() ) {
+    return false;
+  }
+  if ( path ) {
+    *path = m_Path;
+
+  }
+    return true;  
+    //  return false;
 }
 
 }  // end namespace kmlbase
