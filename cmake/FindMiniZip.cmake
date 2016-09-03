@@ -5,30 +5,18 @@
 #  MINIZIP_LIBRARY     - minizip library file
 #  MINIZIP_FOUND       - TRUE if minizip is found
 
-if (MINIZIP_INCLUDE_DIR)
- #check cache 
-  set(MINIZIP_FIND_QUIETLY TRUE)
-endif ()
+set(MINIZIP_FOUND FALSE)
+find_path(MINIZIP_INCLUDE_DIR NAMES unzip.h PATH_SUFFIXES minizip)
+set(MINIZIP_INCLUDE_DIR ${MINIZIP_INCLUDE_DIR}/minizip CACHE PATH "MiniZip includes")
 
-if (NOT MINIZIP_INCLUDE_DIR)
-    find_path(MINIZIP_INCLUDE_DIR NAMES unzip.h PATH_SUFFIXES minizip)
-    set(MINIZIP_INCLUDE_DIR ${MINIZIP_INCLUDE_DIR}/minizip CACHE PATH "minizip includes")
-endif ()
-
-find_library(MINIZIP_LIBRARIES NAMES minizip)
-
-if (MINIZIP_INCLUDE_DIR AND MINIZIP_LIBRARIES)
+find_library(MINIZIP_LIBRARY NAMES minizip)
+if (MINIZIP_INCLUDE_DIR AND MINIZIP_LIBRARY)
   set(MINIZIP_FOUND TRUE)
 endif ()
 
-if (MINIZIP_FOUND)
-   if (NOT MINIZIP_FIND_QUIETLY)
-      message(STATUS "Found Minizip library: ${MINIZIP_LIBRARY}")
-   endif ()
-else ()
-   if (NOT MINIZIP_FIND_QUIETLY)
-      message(FATAL_ERROR "Could NOT find Minizip library")
-    else ()
-      message(STATUS "Could NOT find Minizip library")
-    endif ()
-endif ()
+if(NOT MINIZIP_FIND_QUIETLY)
+  include(${CMAKE_ROOT}/Modules/FindPackageHandleStandardArgs.cmake)
+  find_package_handle_standard_args(MINIZIP 
+    REQUIRED_VARS MINIZIP_LIBRARY MINIZIP_INCLUDE_DIR
+    VERSION_VAR MINIZIP_VERSION_STRING)
+endif()

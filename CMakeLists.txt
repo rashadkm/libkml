@@ -24,6 +24,19 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
+#AM_CXXFLAGS = -Wall -Wextra -Wno-unused-parameter -pedantic -fno-rtti
+#AM_TEST_CXXFLAGS = -Wall -Wextra -Wno-unused-parameter -Werror -fno-rtti -DGTEST_HAS_RTTI=0
+if(CMAKE_COMPILER_IS_GNUCXX)
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Wno-unused-parameter -pedantic -fno-rtti")
+  set(TEST_FLAGS "-Wall -Wextra -Wno-unused-parameter -fno-rtti -DGTEST_HAS_RTTI=0")
+else()
+  if(MSVC)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /DUNICODE /D_UNICODE /EHsc /D_CRT_SECURE_NO_WARNINGS")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /DUNICODE /D_UNICODE /EHsc /D_CRT_SECURE_NO_WARNINGS")
+#    set(BUILD_SHARED_LIBS OFF)
+  endif()
+endif()
+
 if(NOT DEFINED BIN_INSTALL_DIR)
   set(BIN_INSTALL_DIR "${CMAKE_INSTALL_PREFIX}/bin")
 endif(NOT DEFINED BIN_INSTALL_DIR)
@@ -55,65 +68,21 @@ if(NOT DEFINED PKGCONFIG_INSTALL_DIR)
   set(PKGCONFIG_INSTALL_DIR "${LIB_INSTALL_DIR}/pkgconfig")
 endif(NOT DEFINED PKGCONFIG_INSTALL_DIR)
 
+set(LIBKML_URIPARSER_LIBRARY)
+
 set(CMAKE_MODULE_PATH
     ${CMAKE_SOURCE_DIR}/cmake
     ${CMAKE_MODULE_PATH})
 
 set(LIBKML_DATA_DIR  ${CMAKE_SOURCE_DIR}/testdata CACHE "Directory containing test data" PATH)
 
-#AM_CXXFLAGS = -Wall -Wextra -Wno-unused-parameter -pedantic -fno-rtti
-#AM_TEST_CXXFLAGS = -Wall -Wextra -Wno-unused-parameter -Werror -fno-rtti -DGTEST_HAS_RTTI=0
-if(CMAKE_COMPILER_IS_GNUCXX)
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Wno-unused-parameter -pedantic -fno-rtti")
-  set(TEST_FLAGS "-Wall -Wextra -Wno-unused-parameter -fno-rtti -DGTEST_HAS_RTTI=0")
-else()
-  if(MSVC)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /DUNICODE /D_UNICODE")
-#    set(BUILD_SHARED_LIBS OFF)
-  endif()
-endif()
-
-set(INSTALL_DIR "${CMAKE_INSTALL_PREFIX}" CACHE "install directory " PATH)
-set(LIBKML_TARGETS)
-
 include(LibKMLHelper)
 
-set(KMLBASE_DEPENDS)
-
-find_package(Boost)
-if(Boost_FOUND)
-  message(STATUS "Found Boost: ${Boost_VERSION}")
-else()
-  include(External_boost)
-  list(APPEND KMLBASE_DEPENDS BOOST)
-  message(STATUS "Found Boost includes: ${Boost_INCLUDE_DIRS}")
-endif()
-
-include_directories(${Boost_INCLUDE_DIRS})
+add_subdirectory(third_party)
 
 if(NOT BUILD_SHARED_LIBS)    
-    add_definitions(-DXML_STATIC) #for static expat    
+  add_definitions(-DXML_STATIC) #for static expat    
 endif()
-
-#expat is dependency for kmlbase and kmldom
-super_find_package(EXPAT)
-include_directories(${EXPAT_INCLUDE_DIRS})
-
-super_find_package(ZLIB)
-include_directories(${ZLIB_INCLUDE_DIR})
-
-super_find_package(MiniZip)
-include_directories(${MINIZIP_INCLUDE_DIR})
-
-super_find_package(UriParser)
-include_directories(${URIPARSER_INCLUDE_DIR})
-
-include_directories(${CMAKE_SOURCE_DIR}/src)
-
-add_dependencies_if_needed(KMLBASE ZLIB)
-add_dependencies_if_needed(KMLBASE MiniZip)
-add_dependencies_if_needed(KMLBASE UriParser)
-add_dependencies_if_needed(KMLBASE EXPAT)
 
 add_subdirectory(src)
 
