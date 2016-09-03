@@ -84,6 +84,28 @@ if(NOT BUILD_SHARED_LIBS)
   add_definitions(-DXML_STATIC) #for static expat    
 endif()
 
+
+include_directories(${LIBKML_EXPAT_INCLUDE_DIRS})
+include_directories(${LIBKML_BOOST_INCLUDE_DIRS})
+
+include_directories(${LIBKML_ZLIB_INCLUDE_DIRS})
+
+include_directories(${LIBKML_URIPARSER_INCLUDE_DIRS})
+
+include_directories(${CMAKE_SOURCE_DIR}/src)
+include_directories(${CMAKE_SOURCE_DIR}/src/kml)
+
+set(LIBKML_LINK_LIBRARIES ${LIBKML_ZLIB_LIBRARY} ${LIBKML_EXPAT_LIBRARY})
+
+if(LIBKML_URIPARSER_LIBRARY)
+  set(LIBKML_LINK_LIBRARIES ${BASE_LINK_LIBRARIES} ${LIBKML_URIPARSER_LIBRARY})
+endif()
+
+if(LIBKML_MINIZIP_LIBRARY)
+  set(LIBKML_LINK_LIBRARIES ${BASE_LINK_LIBRARIES} ${LIBKML_MINIZIP_LIBRAY})
+endif()
+
+
 add_subdirectory(src)
 
 if(BUILD_TESTING)
@@ -91,9 +113,12 @@ if(BUILD_TESTING)
   add_subdirectory(tests)
 endif()
 
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "bin/examples")
 if(BUILD_EXAMPLES)
   add_subdirectory(examples)
 endif()
+
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "bin")
 
 if(NOT WIN32 OR MINGW)
   configure_file("${CMAKE_SOURCE_DIR}/cmake/libkml.pc.in"

@@ -1,85 +1,70 @@
+
+
 add_library(helloutil STATIC print.cc)
-target_link_libraries(helloutil ${MINIZIP_LIBRARY})
+target_link_libraries(helloutil ${KML_MINIZIP_LIBRARY})
 
-build_example(
-  NAME createkml
-  DEPENDS kmldom kmlbase)
+add_executable(createkml createkml.cc)
+target_link_libraries(createkml libkml)
 
-build_example(
-  NAME circlegen
-  DEPENDS kmlconvenience kmlengine kmldom kmlbase)
+add_executable(circlegen circlegen.cc)
+target_link_libraries(circlegen libkml)
 
-build_example(
-  NAME checklinks
-  DEPENDS kmlengine kmldom kmlbase)
+add_executable(checklinks checklinks.cc)
+target_link_libraries(checklinks libkml)
 
-build_example(
-  NAME countkml
-  DEPENDS kmlengine kmldom kmlbase)
+add_executable(countkml countkml.cc)
+target_link_libraries(countkml libkml)
 
-build_example(
-  NAME helloattrs
-  DEPENDS kmldom kmlbase)
+add_executable(helloattrs helloattrs.cc)
+target_link_libraries(helloattrs libkml)
 
-build_example(
-  NAME helloenum
-  DEPENDS kmldom kmlbase)
+add_executable(helloenum helloenum.cc)
+target_link_libraries(helloenum libkml)
 
-build_example(
-  NAME hellofeatures
-  DEPENDS helloutil kmldom kmlbase)
+add_executable(hellofeatures hellofeatures.cc)
+add_dependencies(hellofeatures helloutil)
+target_link_libraries(hellofeatures libkml helloutil)
 
-build_example(
-  NAME hellofolder
-  DEPENDS kmldom kmlbase)
+add_executable(hellofolder hellofolder.cc)
+target_link_libraries(hellofolder libkml)
 
-build_example(
-  NAME hellogeometry
-  DEPENDS kmldom kmlbase)
+add_executable(hellogeometry hellogeometry.cc)
+target_link_libraries(hellogeometry libkml)
 
-build_example(
-  NAME hellohref
-  DEPENDS helloutil kmldom kmlbase)
+add_executable(hellohref hellohref.cc)
+add_dependencies(hellohref helloutil)
+target_link_libraries(hellohref libkml helloutil)
 
-build_example(
-  NAME hellokmz
-  DEPENDS kmldom kmlbase kmlengine)
+add_executable(hellokmz hellokmz.cc)
+target_link_libraries(hellokmz libkml)
 
-build_example(
-  NAME helloregion
-  DEPENDS helloutil kmldom kmlbase)
+add_executable(helloregion helloregion.cc)
+add_dependencies(helloregion helloutil)
+target_link_libraries(helloregion libkml  helloutil)
 
-build_example(
-  NAME helloworld
-  DEPENDS kmldom kmlbase)
+add_executable(helloworld helloworld.cc)
+target_link_libraries(helloworld libkml)
 
-build_example(
-  NAME parsekml
-  DEPENDS kmldom kmlbase)
+add_executable(parsekml parsekml.cc)
+target_link_libraries(parsekml libkml)
 
-build_example(
-  NAME parsens
-  DEPENDS kmldom kmlbase)
+add_executable(parsens parsens.cc)
+target_link_libraries(parsens libkml)
 
-build_example(
-  NAME prettykml
-  DEPENDS kmldom kmlbase kmlengine)
+add_executable(prettykml prettykml.cc)
+target_link_libraries(prettykml libkml)
 
-build_example(
-  NAME printgeometry
-  DEPENDS kmldom kmlbase kmlengine)
+add_executable(printgeometry printgeometry.cc)
+target_link_libraries(printgeometry libkml)
 
-build_example(
-  NAME sharedstyles
-  DEPENDS kmldom kmlbase kmlengine kmlconvenience)
+add_executable(sharedstyles sharedstyles.cc)
+target_link_libraries(sharedstyles libkml)
 
-build_example(
-  NAME simplifylines
-  DEPENDS kmldom kmlbase kmlengine kmlconvenience)
+add_executable(simplifylines simplifylines.cc)
+target_link_libraries(simplifylines libkml)
 
-build_example(
-  NAME sortplacemarks
-  DEPENDS kmldom kmlbase kmlengine kmlconvenience)
+add_executable(sortplacemarks sortplacemarks.cc)
+target_link_libraries(sortplacemarks libkml)
 
 
 if(INSTALL_EXAMPLES)
@@ -87,5 +72,5 @@ file(GLOB eg_files "${CMAKE_CURRENT_SOURCE_DIR}/*.cc")
 install(FILES ${eg_files}  DESTINATION ${KML_EXAMPLES_DIR} COMPONENT Development)
 install(FILES print.h
   DESTINATION ${KML_EXAMPLES_DIR}
-  COMPONENT Development)
+  COMPONENT Examples)
 endif()

@@ -1,6 +1,5 @@
-file(GLOB SRCS "*.cc" )
-
-set(INCS
+file(GLOB ENGINE_SRCS "${CMAKE_CURRENT_SOURCE_DIR}/*.cc")
+set(ENGINE_INCS
   bbox.h
   clone.h
   engine_types.h
@@ -34,10 +33,7 @@ set(INCS
   style_splitter.h
   update.h)
 
-build_target(
-  NAME kmlengine
-  SRCS ${SRCS}
-  INCS ${INCS}
-  DEPENDS kmlbase;kmldom)
+set(engine_SRCS ${ENGINE_SRCS} PARENT_SCOPE)
+set(engine_INCS ${ENGINE_INCS} PARENT_SCOPE)
 
 

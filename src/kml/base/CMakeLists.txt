@@ -1,10 +1,10 @@
-file(GLOB SRCS "*.cc"
+file(GLOB BASE_SRCS "*.cc"
   contrib/minizip/unzip.c
   contrib/minizip/iomem_simple.c)
 
 if(WIN32)
-  list(APPEND SRCS contrib/strptime.c)
-  list(REMOVE_ITEM SRCS "${CMAKE_CURRENT_SOURCE_DIR}/file_posix.cc")
+  list(APPEND BASE_SRCS "${CMAKE_CURRENT_SOURCE_DIR}/contrib/strptime.c")
+  list(REMOVE_ITEM BASE_SRCS "${CMAKE_CURRENT_SOURCE_DIR}/file_posix.cc")
   if(MINGW)
       #use unicode functions from the windows api
       add_definitions(-DUNICODE -D_UNICODE)
@@ -17,7 +17,7 @@ else()
   set_source_files_properties(${CMAKE_CURRENT_SOURCE_DIR}/zip_file.cc COMPILE_FLAGS "-Wno-long-long")
 endif()
 
-set(INCS
+set(BASE_INCS
   attributes.h
   csv_splitter.h
   date_time.h
@@ -44,23 +44,13 @@ set(INCS
   zip_file.h)
 
 
-
-set(KMLBASE_LINK_LIBRARIES ${LIBKML_ZLIB_LIBRARY} ${LIBKML_EXPAT_LIBRARY})
-
 if(NOT LIBKML_URIPARSER_LIBRARY)
-  set(SRCS ${SRCS} $<TARGET_OBJECTS:uriparser>)
-else()
-  set(KMLBASE_LINK_LIBRARIES ${KMLBASE_LINK_LIBRARIES} ${LIBKML_URIPARSER_LIBRARY})
+  set(BASE_SRCS ${BASE_SRCS} $<TARGET_OBJECTS:uriparser>)
 endif()
 
 if(NOT LIBKML_MINIZIP_LIBRARY)
-  set(SRCS ${SRCS} $<TARGET_OBJECTS:minizip>)
-else()
-  set(KMLBASE_LINK_LIBRARIES ${KMLBASE_LINK_LIBRARIES} ${LIBKML_MINIZIP_LIBRAY})
+  set(BASE_SRCS ${BASE_SRCS} $<TARGET_OBJECTS:minizip>)
 endif()
 
-build_target(
-  NAME kmlbase
-  SRCS ${SRCS} 
-  INCS ${INCS}
-  LINKS  ${KMLBASE_LINK_LIBRARIES} )
+set(base_SRCS ${BASE_SRCS} PARENT_SCOPE)
+set(base_INCS ${BASE_INCS} PARENT_SCOPE)

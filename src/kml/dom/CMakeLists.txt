@@ -1,8 +1,8 @@
-file(GLOB SRCS "*.cc" )
+file(GLOB KMLDOM_SRCS "${CMAKE_CURRENT_SOURCE_DIR}/*.cc" )
 
-list(REMOVE_ITEM SRCS "${CMAKE_CURRENT_SOURCE_DIR}/kml22.cc")
+list(REMOVE_ITEM KMLDOM_SRCS "${CMAKE_CURRENT_SOURCE_DIR}/kml22.cc")
 
-set(INCS
+set(KMLDOM_INCS
   abstractlatlonbox.h
   abstractview.h
   atom.h
@@ -54,9 +54,7 @@ set(INCS
   visitor.h
   visitor_driver.h)
 
-build_target(
-  NAME kmldom
-  SRCS ${SRCS}
-  INCS ${INCS}
-  DEPENDS kmlbase)
+set(dom_SRCS ${ENGINE_SRCS} PARENT_SCOPE)
+set(dom_INCS ${ENGINE_INCS} PARENT_SCOPE)
+
 

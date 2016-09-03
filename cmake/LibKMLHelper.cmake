@@ -74,8 +74,8 @@ endfunction(build_test)
 function(build_example)
   cmake_parse_arguments(EXAMPLE  "" "NAME" "LINKS;DEPENDS" ${ARGN} )
   add_executable(example_${EXAMPLE_NAME} ${EXAMPLE_NAME}.cc)
-  add_dependencies(example_${EXAMPLE_NAME} ${EXAMPLE_DEPENDS})
-  target_link_libraries(example_${EXAMPLE_NAME} ${EXAMPLE_LINKS} ${EXAMPLE_DEPENDS})
+#  add_dependencies(example_${EXAMPLE_NAME} ${EXAMPLE_DEPENDS})
+  target_link_libraries(example_${EXAMPLE_NAME} libkml)
 endfunction(build_example)
 
 
