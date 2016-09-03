@@ -54,6 +54,9 @@ typedef unsigned char u_char;
 typedef unsigned int uint;
 typedef unsigned __int64 uint64_t;
 
+#if defined(_MSC_VER) && _MSC_VER >= 1900
+#define tzname _tzname
+#endif
 #define	_ctloc(x)		(_CurrentTimeLocale->x)
 
 /*
